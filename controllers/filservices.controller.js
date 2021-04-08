@@ -47,7 +47,7 @@ const fileservicesCtr = {
         
         // let's create module folder if new upload; mode ignored on Windows
         try {
-            !fs.existsSync(dstURL) && fs.mkdirSync(dstURL, {recursive:true, mode:0o777});
+            !fs.existsSync(dstURL) && fs.mkdirSync(dstURL, {recursive:true});
         } catch(e) {
             console.log('mkdir.ERR', e);
             return next( createError(500, e.toString()) );
