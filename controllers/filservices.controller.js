@@ -2,14 +2,12 @@ const createError = require('http-errors'),
     fs = require('fs'),
     path = require('path'),
     url = require('url'),
+    _trim = require('lodash/trim'),
     fileservicesModel = require('../models/fileservices.sql');
 
 let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
 UPLOADS_DIR = "file://192.168.1.173/public/";
 UPLOADS_DIR = 'file://192.168.1.179/Users/Public/Downloads/';
-
-let dd = new URL(xbase + 'helpdesk/');
-let df = new URL(xbase + 'helpdesk/' + 'foo_' + Math.random() + '.txt');
 
 const module_directories = {
     'helpdesk':     'helpdesk',
@@ -21,6 +19,9 @@ const module_directories = {
 };
 
 const fileservicesCtr = {
+    getModulesList: (req,res, next) => {
+        return res.json(module_directories);
+    },
     upload: (req, res, next) => {
         const {files, fields} = req;
         let {username, module} = fields;
@@ -37,25 +38,24 @@ const fileservicesCtr = {
             return next( createError(400, `No file field included`) );
         }
 
-        console.log(`username: "${username}", module:"${module}"`);
-        console.log('file(s):', files.files);
-
-        let dstDir = path.join(UPLOADS_DIR, module_directories[module]);
-        dstDir = new URL(UPLOADS_DIR + module_directories[module] + '/');
-        console.log('dstDir', UPLOADS_DIR + module_directories[module], dstDir);
+        //console.log(`username: "${username}", module:"${module}"`);
+        //console.log('file(s):', files.files);
+        let newFilename = files.files.name;
 
         let dstURL = new URL(UPLOADS_DIR + module_directories[module] + '/');
-        let dstFile = new URL(dstURL + )
+        let dstFile = new URL(dstURL + newFilename);
+        
+        // let's create module folder if new upload; mode ignored on Windows
         try {
-            let x1 = fs.mkdirSync(dstDir, {recursive:true, mode:0o777});
-            console.log('fs.mkdirSync', x1);
+            !fs.existsSync(dstURL) && fs.mkdirSync(dstURL, {recursive:true, mode:0o777});
         } catch(e) {
             console.log('mkdir.ERR', e);
             return next( createError(500, e.toString()) );
         }
 
         try {
-            fs.copyFileSync(files.files.path, dstDir+files.files.name );
+            fs.copyFileSync(files.files.path, dstFile );
+            console.group('File Copied!'); console.log('S:', files.files.path); console.log('D:', dstFile.href); console.groupEnd();
         } catch(e) {
             console.log(`fs.copyFileSync.ERR`, e);
             return next( createError(500, e.toString()) );
@@ -63,10 +63,16 @@ const fileservicesCtr = {
 
         res.json( {status:true, method:'upload', timeStamp:new Date().toUTCString(), 
             src:files.files.path,
-            dst:dstDir} );
+            dst:dstFile} );
     },
     download: (req, res, next) => {
-        console.log('ctr.download', req.fields);
+        let {filename, module, username} = req.fields;
+        filename = _trim(filename);
+        console.log(`ctr.download: "${filename}"`);
+
+        if(filename = '') {
+            return next( createError(400, 'Empty filename') );
+        }
 
         res.json( {status:true, method:'download', timeStamp:new Date().toUTCString()} );
     }

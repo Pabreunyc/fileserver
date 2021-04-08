@@ -26,4 +26,6 @@ router.route('/')
 router.post('/upload', fileservicesCtr.upload);
 router.get('/download', fileservicesCtr.download);
 
+router.get('/modules', fileservicesCtr.getModulesList);
+
 module.exports = router;
