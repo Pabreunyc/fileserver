@@ -68,7 +68,7 @@ try {
         df3 = dd.href + newFile;        
     
     console.group('COPY');
-    console.log(dd.href); console.log(df.href); console.log(df2.href); console.log(df3); console.log(sf);
+    console.log(dd.href); console.log(df.href); console.log(df2); console.log(df3); console.log(sf);
     console.groupEnd();
 
     //HTMLFormControlsCollection
@@ -80,4 +80,3 @@ try {
 } catch(e) {
     console.log('new url', e);
 }
-console.log('outside:', df3);
