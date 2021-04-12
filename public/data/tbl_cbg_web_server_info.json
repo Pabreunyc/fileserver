@@ -1,0 +1,38 @@
+[
+	{
+		"id" : 1,
+		"server_file_path" : "C:\\temp",
+		"server_path_type" : "local_development",
+		"is_active" : 0
+	},
+	{
+		"id" : 2,
+		"server_file_path" : "/mnt/cbg_masterdoc/00.development",
+		"server_path_type" : "staging_server",
+		"is_active" : 0
+	},
+	{
+		"id" : 3,
+		"server_file_path" : "/mnt",
+		"server_path_type" : "production",
+		"is_active" : 0
+	},
+	{
+		"id" : 4,
+		"server_file_path" : "J:Backups",
+		"server_path_type" : "local_development",
+		"is_active" : 0
+	},
+	{
+		"id" : 5,
+		"server_file_path" : "Y:",
+		"server_path_type" : "local_development",
+		"is_active" : 0
+	},
+	{
+		"id" : 6,
+		"server_file_path" : "file:\\\\192.168.1.200\\public\\",
+		"server_path_type" : "local_development",
+		"is_active" : 1
+	}
+]

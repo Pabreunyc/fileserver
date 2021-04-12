@@ -20,7 +20,11 @@ const module_directories = {
 
 const fileservicesCtr = {
     getModulesList: (req,res, next) => {
-        return res.json(module_directories);
+        return res.json( {
+            timestamp:res.locals.myVar,  
+            modules: module_directories,
+            activeDrivePath: res.locals.activeDrivePath
+        } );
     },
     upload: (req, res, next) => {
         const {files, fields} = req;
