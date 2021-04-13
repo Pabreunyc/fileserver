@@ -23,4 +23,16 @@
 		"server_path_type" : "Windows 7 Public Folder",
 		"is_active" : 1
 	}
+	{
+		"id" : 5,
+		"server_file_path" : "/mnt/win10/",
+		"server_path_type" : "Linux host, mounted Windows share",
+		"is_active" : 0
+	}
+	{
+		"id" : 5,
+		"server_file_path" : "/media/sf_Development",
+		"server_path_type" : "Linx host, Virtualbox sharer",
+		"is_active" : 0
+	}
 ]
