@@ -1,7 +1,7 @@
 const express = require('express'),
     formidableMW = require('express-formidable');
 const fileservicesCtr = require('../controllers/filservices.controller');
-const drivePathsJSON = require('../config/drive_paths.json');
+
 
 const router = express.Router();
 console.log(__filename, __dirname);
@@ -14,6 +14,9 @@ router.use((req, res, next) => {
     res.locals.myVar = new Date().toLocaleString();
     res.locals.drivePaths = drivePathsJSON;
     res.locals.activeDrivePath = drivePathsJSON.filter(e => e.is_active == 1)[0];
+
+    console.log('[DEST_DIR]:', process.env.DEST_DIR);
+    console.log('[WINDIR]:', process.env.WINDIR);
     next();
 })
 /* GET users listing. */

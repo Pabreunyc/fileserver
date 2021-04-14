@@ -42,8 +42,6 @@ const fileservicesCtr = {
             return next( createError(400, `No file field included`) );
         }
 
-        //console.log(`username: "${username}", module:"${module}"`);
-        //console.log('file(s):', files.files);
         let newFilename = files.files.name;
 
         let dstURL = new URL(UPLOADS_DIR + module_directories[module] + '/');
