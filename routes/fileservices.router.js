@@ -1,22 +1,19 @@
 const express = require('express'),
-    formidableMW = require('express-formidable');
+    formidableMW = require('express-formidable'),
+    drivePaths = require('../config/drive_paths_mock.json');
 const fileservicesCtr = require('../controllers/filservices.controller');
 
-
 const router = express.Router();
-console.log(__filename, __dirname);
+//console.log(__filename, __dirname);
 
 router.use(formidableMW({
     hash:'md5',
     multiples: true
 }) );
 router.use((req, res, next) => {
-    res.locals.myVar = new Date().toLocaleString();
-    res.locals.drivePaths = drivePathsJSON;
-    res.locals.activeDrivePath = drivePathsJSON.filter(e => e.is_active == 1)[0];
-
-    console.log('[DEST_DIR]:', process.env.DEST_DIR);
-    console.log('[WINDIR]:', process.env.WINDIR);
+    let activeDrivePath = drivePaths.filter(e => e.is_active == 1);
+    activeDrivePath = activeDrivePath[activeDrivePath.length -1];
+    res.locals.activeDrivePath = activeDrivePath.server_file_path.toLowerCase();
     next();
 })
 /* GET users listing. */
@@ -37,5 +34,6 @@ router.post('/upload', fileservicesCtr.upload);
 router.get('/download', fileservicesCtr.download);
 
 router.get('/modules', fileservicesCtr.getModulesList);
+router.get('/directory', fileservicesCtr.getDirectoryListing);
 
 module.exports = router;

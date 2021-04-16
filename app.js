@@ -8,8 +8,6 @@ const indexRouter = require('./routes/index'),
   usersRouter = require('./routes/users'),
   fileservicesRouter = require('./routes/fileservices.router');
 
-const configs = require('./config/system_config.json');
-
 var app = express();
 
 // view engine setup
@@ -22,7 +20,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use( (req, res, next) => {
-  req.locals = configs;
+  //req.locals = configs;
+  next();
 })
 
 
