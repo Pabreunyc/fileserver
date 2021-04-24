@@ -1,0 +1,12 @@
+{
+    "vm":{
+        "host"   : "192.168.1.173",
+        "host_dev"   : "192.168.1.173",
+        "host_stg"   : "192.168.1.173",
+        "dbuser" : "cpsa",
+        "dbpwd"  : "webapp",
+        "dbport" : 3306,        
+        "conLimit" : 10,
+        "multipleStatements" : true
+    }
+}

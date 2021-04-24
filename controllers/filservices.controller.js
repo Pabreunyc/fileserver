@@ -5,10 +5,12 @@ const createError = require('http-errors'),
     url = require('url'),
     _trim = require('lodash/trim'),
     fileservicesModel = require('../models/fileservices.sql');
+const fileservicesSql = require('../models/fileservices.sql');
 
-let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
-UPLOADS_DIR = "file://192.168.1.173/public/";
-UPLOADS_DIR = 'file://192.168.1.179/Users/Public/Downloads/';
+const f1 = require('../models/fileservices.sql');
+//let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
+//UPLOADS_DIR = "file://192.168.1.173/public/";
+//UPLOADS_DIR = 'file://192.168.1.179/Users/Public/Downloads/';
 
 const CBG_MASTERDOC = "cbg_masterdoc";
 const module_directories = {
@@ -52,7 +54,7 @@ const fileservicesCtr = {
     upload: (req, res, next) => {
         const {files, fields} = req;
         const {activeDrivePath} = res.locals;
-
+        
         let today = new Date();
         let {username, module} = fields;
         username = (username || '').trim().toLowerCase().replace(/\W/g, '_');// + '__' + today.subtring(0,10);
@@ -77,14 +79,17 @@ const fileservicesCtr = {
         if( (os.platform() == 'win32') && (activeDrivePath.indexOf('file:') != 0) ) {
             destDir = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC,  module_directories[module] + '/') );
             destFile = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC, module_directories[module], newFilename) );
+        } else {
+            destDir = '';
         }
+    
 
-        /*
         return res.json( {filename:newFilename, activeDrivePath:activeDrivePath, 
             destDir:destDir, destFile:destFile,
             os:os.platform(), 
+            xxx:JSON.stringify("hello"),
             timeStamp:Date().toLocaleString()} );
-        */
+        
 
         // let's create module folder if new upload; mode ignored on Windows
         try {

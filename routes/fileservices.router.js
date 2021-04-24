@@ -22,13 +22,13 @@ router.route('/')
         res.send(`${req.method}: filservices API`);
     })
     .post((req,res,next) => {
-    const { files, fields } = req;
-    let x = Math.random();
+        const { files, fields } = req;
+        let x = Math.random();
 
-    console.log('file:', files);
+        console.log('file:', files);
 
-    res.send(`${req.method}: filservices API`);
-});
+        res.send(`${req.method}: filservices API`);
+    });
 
 router.post('/upload', fileservicesCtr.upload);
 router.get('/download', fileservicesCtr.download);
