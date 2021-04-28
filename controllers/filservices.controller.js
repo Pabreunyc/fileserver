@@ -3,9 +3,10 @@ const createError = require('http-errors'),
     os = require('os'),
     path = require('path'),
     url = require('url'),
-    _trim = require('lodash/trim'),
-    fileservicesModel = require('../models/fileservices.sql');
-const fileservicesSql = require('../models/fileservices.sql');
+    _trim = require('lodash/trim');
+const fileservicesSql = require('../models/fileservices.sql'),
+    helpdeskSql = require('../models/helpdesk.sql'),
+    maintenanceSql = require('../models/maintenance.sql');
 
 const f1 = require('../models/fileservices.sql');
 //let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
@@ -14,21 +15,28 @@ const f1 = require('../models/fileservices.sql');
 
 const CBG_MASTERDOC = "cbg_masterdoc";
 const module_directories = {
-    'helpdesk':     'helpdesk',
-    'maintenance':  'maintenance',
-    'mapfile':      'mapfile',    
-    'sainventory':  'sainventory',
-    'sarrs':        'sarrs',
-    'sprout':       'sprout',
+    'helpdesk': {
+        directory: 'helpdesk',
+        cb: helpdeskSql._getFile
+    },
+    'maintenance': {
+        directory: 'maintenance',
+        cb: maintenanceSql._getFile
+    },
+    'mapfile': {
+        directory: 'mapfile',
+        cb: ''
+    },
+    'documents': 'docsFolder'
 };
 
 const fileservicesCtr = {
     getModulesList: (req,res, next) => {
-        return res.json( {
-            timestamp:res.locals.myVar,  
-            modules: module_directories,
-            activeDrivePath: res.locals.activeDrivePath
-        } );
+        let m = module_directories;
+        const mods = Object.keys(m).map(el => {
+            return m[el].directory ? m[el].directory : m[el];
+        });
+        return res.json(mods);
     },
     getDirectoryListing: (req, res, next) => {
         const {activeDrivePath} = res.locals;
@@ -51,10 +59,11 @@ const fileservicesCtr = {
             directoryListing: directoryListing
         });
     },
-    upload: (req, res, next) => {
+    upload:async (req, res, next) => {
         const {files, fields} = req;
         const {activeDrivePath} = res.locals;
-        
+        const platform = os.platform();
+
         let today = new Date();
         let {username, module} = fields;
         username = (username || '').trim().toLowerCase().replace(/\W/g, '_');// + '__' + today.subtring(0,10);
@@ -62,40 +71,54 @@ const fileservicesCtr = {
 
         if(username == '') {
             return next( createError(400, `Username required`) );
+        }        
+        if(!files.hasOwnProperty('files')) {
+            return next( createError(400, `No file field included`) );
         }
         if(!module_directories.hasOwnProperty(module)) {
             return next( createError(400, `Module "${module}" not recognized`) );
         }
-        if(!files.hasOwnProperty('files')) {
-            return next( createError(400, `No file field included`) );
-        }
-
-        let newFilename = username + '_' + today.toISOString().substring(0,10) + path.extname(files.files.name);
+        //let newFilename = username + '_' + today.toISOString().substring(0,10) + path.extname(files.files.name);
+        let newFilename = username + '_' + getId() + path.extname(files.files.name);
+        let moduleDirectory = module_directories[module].directory ? module_directories[module].directory : module_directories[module];
         //let dstURL = new URL(UPLOADS_DIR + module_directories[module] + '/');
         //let dstFile = new URL(dstURL + newFilename);
 
         let destDir = destFile = '__';
-        // going to use FILE: protocol
-        if( (os.platform() == 'win32') && (activeDrivePath.indexOf('file:') != 0) ) {
-            destDir = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC,  module_directories[module] + '/') );
+        // using filepath so force FILE: protocol on win32
+        if( (platform === 'win32') && (activeDrivePath.indexOf('file:') != 0) ) {
+            destDir = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC,  module_directories[module]) );
             destFile = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC, module_directories[module], newFilename) );
-        } else {
-            destDir = '';
         }
-    
-
-        return res.json( {filename:newFilename, activeDrivePath:activeDrivePath, 
-            destDir:destDir, destFile:destFile,
-            os:os.platform(), 
-            xxx:JSON.stringify("hello"),
-            timeStamp:Date().toLocaleString()} );
+        if( (platform === 'win32') && (activeDrivePath.indexOf('file:') === 0) ) {            
+            destDir = new URL( activeDrivePath + CBG_MASTERDOC + '/' + moduleDirectory );
+            destFile = new URL( activeDrivePath + CBG_MASTERDOC + '/' + moduleDirectory + '/' + newFilename );
+        }
+        if( platform === 'linux' && (activeDrivePath.indexOf('file:') !== 0)) {
+            destDir = path.join(activeDrivePath, CBG_MASTERDOC, moduleDirectory);
+            destFile = path.join(destDir, newFilename);
+        }
+        if( (platform === 'linux') && (activeDrivePath.indexOf('file:') === 0) ) {
+            return next( createError(500, "Invalid drive store. Contact Admin.") );
+        }
         
+        if(false) {
+            return res.json( {
+                filename:newFilename,
+                activeDrivePath:activeDrivePath, 
+                moduleDirectory: moduleDirectory,
+                destDir:destDir, destFile:destFile,
+                os:os.platform(), 
+                timeStamp:Date().toLocaleString()
+            } );
+        }
 
         // let's create module folder if new upload; mode ignored on Windows
         try {
             !fs.existsSync(destDir) && fs.mkdirSync(destDir, {recursive:true});
         } catch(e) {
             console.log('mkdir.ERR', e);
+            console.log(destDir.href);
             return next( createError(500, e.toString()) );
         }
 
@@ -116,16 +139,14 @@ const fileservicesCtr = {
         return res.json( {
             status:true,
             originalFilename:files.files.name,
+            filesize:files.files.size,
+            filetype:files.files.type,
             savedFilename: newFilename,
             activeDrivePath:activeDrivePath, 
             destDir:destDir, destFile:destFile,
             hash:files.files.hash,
             os:os.platform(), 
             timeStamp:Date().toLocaleString()} );
-
-        res.json( {status:true, method:'upload', timeStamp:new Date().toUTCString(), 
-            src:files.files.path,
-            dst:dstFile} );
     },
     download: (req, res, next) => {
         let {filename, module, username} = req.fields;
@@ -137,11 +158,17 @@ const fileservicesCtr = {
         }
 
         res.json( {status:true, method:'download', timeStamp:new Date().toUTCString()} );
-    }
+    },
+
+    // ========================================================================    
 }
 
 module.exports = fileservicesCtr;
 
+function getId(n) {
+    //  http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}    
 /*
 message: 'ENOENT: no such file or directory, copyfile 'C:\\Users\\Paul\\AppData\\Local\\Temp\\upload_6f9b159bfb4cda7515ca0235ed7d9950' -> 'file://192.168.1.173/public/helpdesk/test_contract_drawings.xlsx''
 
