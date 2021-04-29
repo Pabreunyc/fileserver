@@ -7,28 +7,13 @@ const createError = require('http-errors'),
 const fileservicesSql = require('../models/fileservices.sql'),
     helpdeskSql = require('../models/helpdesk.sql'),
     maintenanceSql = require('../models/maintenance.sql');
+const dbCtr = require('./db.controller');
+const module_directories = require('../config/module_directories.json');
 
-const f1 = require('../models/fileservices.sql');
 //let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
 //UPLOADS_DIR = "file://192.168.1.173/public/";
-//UPLOADS_DIR = 'file://192.168.1.179/Users/Public/Downloads/';
 
 const CBG_MASTERDOC = "cbg_masterdoc";
-const module_directories = {
-    'helpdesk': {
-        directory: 'helpdesk',
-        cb: helpdeskSql._getFile
-    },
-    'maintenance': {
-        directory: 'maintenance',
-        cb: maintenanceSql._getFile
-    },
-    'mapfile': {
-        directory: 'mapfile',
-        cb: ''
-    },
-    'documents': 'docsFolder'
-};
 
 const fileservicesCtr = {
     getModulesList: (req,res, next) => {
@@ -36,7 +21,10 @@ const fileservicesCtr = {
         const mods = Object.keys(m).map(el => {
             return m[el].directory ? m[el].directory : m[el];
         });
-        return res.json(mods);
+        const m2 = Object.keys(m).filter(el =>
+            m[el].hasOwnProperty('cb') && (typeof m[el].cb == 'object')
+        );
+        return res.json(m2);
     },
     getDirectoryListing: (req, res, next) => {
         const {activeDrivePath} = res.locals;
@@ -148,16 +136,36 @@ const fileservicesCtr = {
             os:os.platform(), 
             timeStamp:Date().toLocaleString()} );
     },
-    download: (req, res, next) => {
-        let {filename, module, username} = req.fields;
-        filename = _trim(filename);
-        console.log(`ctr.download: "${filename}"`);
+    download:async (req, res, next) => {
+        let {module, fileId} = req.fields;
+        module = (module || '').trim().toLowerCase();
+        let id = parseInt(fileId);
 
-        if(filename = '') {
-            return next( createError(400, 'Empty filename') );
+        console.log(`ctr.download: "${fileId}"`);
+
+        if((id === 0) || isNaN(id) ){
+            return next( createError(400, `Wrong FileId: "${fileId}"`) );
         }
+        let ret = await dbCtr._getFileInfo(module, fileId);
+        console.log('$$', ret, ret.length);
 
-        res.json( {status:true, method:'download', timeStamp:new Date().toUTCString()} );
+        if(ret.length) {
+            const {filepath} = ret[0];
+
+            try {
+                let saveFilename = filepath.substring(filepath.lastIndexOf('/')+1);
+                console.log(filepath, fs.existsSync(filepath) );
+                if( fs.existsSync(filepath) ) {
+                    return res.download(filepath, saveFilename);
+                } else {
+                    return res.status(404).send(`No such file: "${saveFilename}"`);
+                }
+            } catch(e) {
+                return next( createError(500, e.toString()) );
+            }
+        } else {
+            return next( createError(404) );
+        } 
     },
 
     // ========================================================================    

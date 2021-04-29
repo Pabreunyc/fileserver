@@ -31,7 +31,7 @@ router.route('/')
     });
 
 router.post('/upload', fileservicesCtr.upload);
-router.get('/download', fileservicesCtr.download);
+router.post('/download', fileservicesCtr.download);
 
 router.get('/modules', fileservicesCtr.getModulesList);
 router.get('/directory', fileservicesCtr.getDirectoryListing);

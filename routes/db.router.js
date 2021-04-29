@@ -9,4 +9,7 @@ router.route('/')
 
 router.post('/saveInfo', dbCtr.saveInfo);
 
+router.get('/getFilesHelpdesk', dbCtr.getAllFiles);
+router.get('/getFilesMaintenance', dbCtr.getAllFiles);
+
 module.exports = router;

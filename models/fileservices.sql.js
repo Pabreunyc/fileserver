@@ -6,7 +6,7 @@ module.exports = {
         return 666;
     },
     _saveFile: (d) => {
-        return true;
+        return Math.random();
     },
     getAllFiles: async (fileId) => {
         let ret = undefined;
