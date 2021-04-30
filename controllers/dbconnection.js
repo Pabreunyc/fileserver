@@ -2,12 +2,13 @@ var dbconfig = require('../config/db.config.json');
 var mysql = require('mysql');
 var util = require('util');
 
-const DB = dbconfig.vm;
+const DB = dbconfig.parks;
 
 var dbpool = mysql.createPool({
     host     : DB.host,
     user     : DB.dbuser,
     password : DB.dbpwd,
+    database : DB.database,
     port     : DB.dbport,
     connectionLimit : DB.conLimit,
     multipleStatements : DB.multipleStatements
@@ -38,7 +39,6 @@ dbpool.getConnection((err, connection) => {
 
   return;
 });
-console.log('++++', dbpool);
 // Promisify for Node.js async/await.
 dbpool.query = util.promisify(dbpool.query);
 dbpool.queryAsync = dbpool.query;
