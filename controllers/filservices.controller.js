@@ -3,6 +3,7 @@ const createError = require('http-errors'),
     os = require('os'),
     path = require('path'),
     url = require('url'),
+    mime = require('mime'),
     _trim = require('lodash/trim');
 const fileservicesSql = require('../models/fileservices.sql'),
     helpdeskSql = require('../models/helpdesk.sql'),
@@ -141,7 +142,7 @@ const fileservicesCtr = {
         module = (module || '').trim().toLowerCase();
         let id = parseInt(fileId);
 
-        console.log(`ctr.download: "${fileId}"`);
+        console.log(`ctr.download: "${module}" -- "${fileId}"`);
 
         if((id === 0) || isNaN(id) ){
             return next( createError(400, `Wrong FileId: "${fileId}"`) );
@@ -150,17 +151,22 @@ const fileservicesCtr = {
         console.log('$$', ret, ret.length);
 
         if(ret.length) {
-            const {filepath} = ret[0];
+            const {filepath, filename} = ret[0];
 
             try {
-                let saveFilename = filepath.substring(filepath.lastIndexOf('/')+1);
-                console.log(filepath, fs.existsSync(filepath) );
-                if( fs.existsSync(filepath) ) {
-                    return res.download(filepath, saveFilename);
+                let filepathURL = new URL(filepath);
+                let saveFilename = filename ? filename : filepath.substring(filepath.lastIndexOf('/')+1);
+
+                if( fs.existsSync(filepathURL) ) {
+                    //console.log('mime:', mime.lookup(filepathURL));
+
+                    let buf = fs.readFileSync(filepathURL);
+                    return res.send(buf);
                 } else {
                     return res.status(404).send(`No such file: "${saveFilename}"`);
                 }
             } catch(e) {
+                console.log('download.ERR', e);
                 return next( createError(500, e.toString()) );
             }
         } else {

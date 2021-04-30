@@ -80,7 +80,7 @@ const dbCtr = {
             return ret;
         } catch(e) {
             console.log('this._getFileInfo.ERR', e);
-            return next( createError(500, e.code ? e.code : e.toString()) );
+            return new Error(e);
         }
 
     }

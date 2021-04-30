@@ -6,13 +6,19 @@ module.exports = {
         const sql = "SELECT * FROM cpsa.hd_attachments ORDER BY id;";
         return conn.query(sql);
     },
-    _getFile: (fileId) => {        
+    _getFile: (fileId) => {
+    /**
+     * MUST RETURN
+     * filepath: full file path
+     * fileId?: return fileId
+     * filename?: saved filename only
+    **/
         let id = parseInt(fileId);
 
         if( (id === 0) || isNaN(id) ) {
             return new Error(`Illegal fileId: "{fileId}"`);
         }
-        const sql = "SELECT filename, filepath FROM cpsa.hd_attachments WHERE id = ?;";
+        const sql = "SELECT id AS fileId, filename, filepath FROM cpsa.hd_attachments WHERE id = ?;";
         return conn.query(sql, id);
     },
     _saveFileInfo: (info) => {
