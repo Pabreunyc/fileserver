@@ -12,7 +12,7 @@ module.exports = {
         let ret = undefined;
         console.log('this.getAllFiles', fileId);
         try {
-            ret = await conn.query('SELECT * FROM hd_attachments;');
+            ret = await conn.query('SELECT * FROM tbl_hd_attachments;');
         } catch(e) {
             console.log('=====', e);
             ret = e;

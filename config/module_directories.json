@@ -1,15 +1,50 @@
 {
     "helpdesk": {
-        "directory": "helpdesk",
+        "directory": "sahd",
         "cb": {"get": "_getFile", "save":"_saveFileInfo"}
     },
     "maintenance": {
-        "directory": "maintenance",
-        "cb": {"get":"_getFile", "save":"_saveFile"}
+            "directory": "sahd/maint_logs",
+            "cb": {"get": "_getFile", "save":"_saveFile"}
     },
-    "mapfile": {
-        "directory": "mapfile",
-        "cb": ""
+    "sprout-cpcs70": {
+        "directory": "cpms/cpcss",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
     },
-    "documents": "docsFolder"
+    "sprout-transfer": {
+        "directory": "cpms/transfer",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "sprout-report": {
+        "directory": "cpms/report",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cbg-ee": {
+        "directory": "cbg_masterdoc/Landscape_Arch/spec",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cbg-ee-custom": {
+        "directory": "cbg_masterdoc/Landscape_Arch/custom_spec",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cbg-ee-master": {
+        "directory": "cbg_masterdoc/Architecture/MasterSpec",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cbg-output": {
+        "directory": "cbg_output",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cbg-customart": {
+        "directory": "cbg_masterdoc/Landscape_Arch/custom_articles",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cars": {
+        "directory": "cpa_staging",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    },
+    "cars-queue": {
+        "directory": "cpa_staging/case_output",
+        "cb": {"get": "_getFile", "save":"_saveFileInfo"}
+    }
 }

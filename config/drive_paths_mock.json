@@ -58,6 +58,12 @@
 		"server_file_path": "file://192.168.1.173//public/",
 		"server_path_type": "Linux folder",
 		"is_active": 1
+	},
+	{
+		"id": 11,
+		"server_file_path": "//192.168.1.173//public/",
+		"server_path_type": "Linux folder",
+		"is_active": 1
 	}
 
 ]

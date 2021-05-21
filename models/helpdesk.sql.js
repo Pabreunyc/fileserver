@@ -3,7 +3,7 @@ const mysql = require('mysql'),
 
 module.exports = {
     getAllFiles: (req, res, next) => {
-        const sql = "SELECT * FROM hd_attachments ORDER BY id DESC;";
+        const sql = "SELECT * FROM tbl_hd_attachments ORDER BY id DESC;";
         return conn.query(sql);
     },
     _getFile: (fileId) => {
@@ -18,19 +18,21 @@ module.exports = {
         if( (id === 0) || isNaN(id) ) {
             return new Error(`Illegal fileId: "{fileId}"`);
         }
-        const sql = "SELECT id AS fileId, filename, filepath FROM hd_attachments WHERE id = ?;";
+        const sql = "SELECT id AS fileId, filename, filepath FROM tbl_hd_attachments WHERE id = ?;";
         return conn.query(sql, id);
     },
     _saveFileInfo: (info) => {
         let { filename, filetype, filesize, filepath } = info;
 
         let fd = {
+            ticketId: 0,
+            userId: 0,
             filename:filename,
             filetype:filetype,
             filesize:parseInt(filesize),
             filepath:filepath
         };
-        const sql = "INSERT INTO hd_attachments SET ?;";
+        const sql = "INSERT INTO tbl_hd_attachments SET ?;";
         
         return conn.query(sql, fd);        
     }

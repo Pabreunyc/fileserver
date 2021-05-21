@@ -3,18 +3,22 @@ const createError = require('http-errors'),
     os = require('os'),
     path = require('path'),
     url = require('url'),
-    mime = require('mime'),
+    mime = require('mime-types'),
+    mysql = require('mysql'),
+    conn = require('../controllers/dbconnection'),
     _trim = require('lodash/trim');
 const fileservicesSql = require('../models/fileservices.sql'),
     helpdeskSql = require('../models/helpdesk.sql'),
     maintenanceSql = require('../models/maintenance.sql');
 const dbCtr = require('./db.controller');
 const module_directories = require('../config/module_directories.json');
+const { runInNewContext } = require('vm');
 
 //let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
 //UPLOADS_DIR = "file://192.168.1.173/public/";
 
-const CBG_MASTERDOC = "cbg_masterdoc";
+//const CBG_MASTERDOC = "cbg_masterdoc";
+const CBG_MASTERDOC = "";
 
 const fileservicesCtr = {
     getModulesList: (req,res, next) => {
@@ -68,16 +72,16 @@ const fileservicesCtr = {
             return next( createError(400, `Module "${module}" not recognized`) );
         }
         //let newFilename = username + '_' + today.toISOString().substring(0,10) + path.extname(files.files.name);
-        let newFilename = username + '_' + getId() + path.extname(files.files.name);
+        //let newFilename = username + '_' + getId() + path.extname(files.files.name);
+        let timeStamp = Date.now();
+        let newFilename = `${username}_${timeStamp}_${files.files.name}`;
         let moduleDirectory = module_directories[module].directory ? module_directories[module].directory : module_directories[module];
-        //let dstURL = new URL(UPLOADS_DIR + module_directories[module] + '/');
-        //let dstFile = new URL(dstURL + newFilename);
-
+        
         let destDir = destFile = '__';
-        // using filepath so force FILE: protocol on win32
+        // o Win32, forcing FILE: protocol
         if( (platform === 'win32') && (activeDrivePath.indexOf('file:') != 0) ) {
-            destDir = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC,  module_directories[module]) );
-            destFile = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC, module_directories[module], newFilename) );
+            destDir = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC,  moduleDirectory) );
+            destFile = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC, moduleDirectory, newFilename) );
         }
         if( (platform === 'win32') && (activeDrivePath.indexOf('file:') === 0) ) {            
             destDir = new URL( activeDrivePath + CBG_MASTERDOC + '/' + moduleDirectory );
@@ -90,7 +94,7 @@ const fileservicesCtr = {
         if( (platform === 'linux') && (activeDrivePath.indexOf('file:') === 0) ) {
             return next( createError(500, "Invalid drive store. Contact Admin.") );
         }
-        
+        console.log('upload', mime.lookup(files.files.name));
         if(false) {
             return res.json( {
                 filename:newFilename,
@@ -103,6 +107,7 @@ const fileservicesCtr = {
         }
 
         // let's create module folder if new upload; mode ignored on Windows
+        /*
         try {
             !fs.existsSync(destDir) && fs.mkdirSync(destDir, {recursive:true});
         } catch(e) {
@@ -125,31 +130,53 @@ const fileservicesCtr = {
             console.log('fs.unlinkSync.ERR', e);
             return next( createError(500, e.toString()) );
         }
+        */
+
+        try {
+            console.log('1');
+            copyFileToDestination(files.files.path, destDir, destFile);
+            console.log('2');
+        } catch(e) {
+            console.log('3', e);
+            return next( createError(500, e.toString()) );
+        }
+
+        return res.json( {
+            destFile: destFile,
+            filename: files.files.name,
+            hash: files.files.hash,
+            owner: username,
+            size: files.files.size,
+            type: files.files.type,
+            timeStamp:timeStamp
+        })
         return res.json( {
             status:true,
             originalFilename:files.files.name,
-            filesize:files.files.size,
-            filetype:files.files.type,
             savedFilename: newFilename,
+            filesize:files.files.size,
+            filetype:files.files.type,            
             activeDrivePath:activeDrivePath, 
-            destDir:destDir, destFile:destFile,
+            destDir:destDir,             
+            destFile:destFile,                        
             hash:files.files.hash,
             os:os.platform(), 
-            timeStamp:Date().toLocaleString()} );
+            timeStamp:timeStamp} );
     },
     download:async (req, res, next) => {
         let {module, fileId} = req.fields;
         module = (module || '').trim().toLowerCase();
-        let id = parseInt(fileId);
-
-        console.log(`ctr.download: "${module}" -- "${fileId}"`);
+        let id = parseInt(fileId);        
 
         if((id === 0) || isNaN(id) ){
-            return next( createError(400, `Wrong FileId: "${fileId}"`) );
+            return next( createError(400, `Invalid FileId: "${fileId}"`) );
         }
-        let ret = await dbCtr._getFileInfo(module, fileId);
-        console.log('$$', ret, ret.length);
+        if( (module==='') || !module_directories.hasOwnProperty(module) ) {
+            return next( createError(400, `Invalid module: "${module}"`) );
+        }
 
+        let ret = await dbCtr._getFileInfo(module, fileId);
+        
         if(ret.length) {
             const {filepath, filename} = ret[0];
 
@@ -158,10 +185,33 @@ const fileservicesCtr = {
                 let saveFilename = filename ? filename : filepath.substring(filepath.lastIndexOf('/')+1);
 
                 if( fs.existsSync(filepathURL) ) {
+                    let fileMimetype = mime.lookup(filepathURL);
                     //console.log('mime:', mime.lookup(filepathURL));
 
-                    let buf = fs.readFileSync(filepathURL);
-                    return res.send(buf);
+                    //let buf = fs.readFileSync(filepathURL);
+                    //runInNewContext
+                    console.log('--1--');
+                    
+                    try {
+                        const file = fs.readFileSync(filepathURL);
+                        console.log('--2--');
+                        console.log(`${saveFilename}: ${file.length}`);
+                        res.attachment(saveFilename);
+                        res.write(file);
+                        return res.end();
+                    } catch(err) {
+                        console.log('readfileSync.ERR', err);
+                        return next( createError(500, err.toString()) );
+                    }
+                   /*
+                    let xfilePath = fs.createReadStream(filepathURL);
+                    res.pipe(xfilePath);
+                    xfilePath.on('finish', () => {
+                        console.log(Date(), "finished");
+                        xfilePath.close();
+                    });
+                    */
+                    console.log('--3--');  
                 } else {
                     return res.status(404).send(`No such file: "${saveFilename}"`);
                 }
@@ -179,10 +229,21 @@ const fileservicesCtr = {
 
 module.exports = fileservicesCtr;
 
+function copyFileToDestination(origFile, destDir, destFile) {
+    try {
+        !fs.existsSync(destDir) && fs.mkdirSync(destDir, {recursive:true});
+        fs.copyFileSync(origFile, destFile );
+        fs.unlinkSync(origFile);
+        return true;
+    } catch(e) {
+        console.log('UPLOAD.ERR', e);
+        throw e;
+    }
+}
 function getId(n) {
     //  http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}    
+}
 /*
 message: 'ENOENT: no such file or directory, copyfile 'C:\\Users\\Paul\\AppData\\Local\\Temp\\upload_6f9b159bfb4cda7515ca0235ed7d9950' -> 'file://192.168.1.173/public/helpdesk/test_contract_drawings.xlsx''
 

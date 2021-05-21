@@ -1,4 +1,4 @@
-CREATE TABLE `hd_tickets` (
+CREATE TABLE `tbl_hd_tickets` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `userId` int(10) unsigned NOT NULL,
   `assignedTo` int(11) DEFAULT '0' COMMENT 'a specific admin',
@@ -16,7 +16,7 @@ CREATE TABLE `hd_tickets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ============================================================================
-CREATE TABLE `hd_comments` (
+CREATE TABLE `tbl_hd_comments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ticketId` int(11) NOT NULL,
   `userId` int(11) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE `hd_comments` (
 
 -- ============================================================================
 
-CREATE TABLE `hd_attachments` (
+CREATE TABLE `tbl_hd_attachments` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `filename` varchar(128) NOT NULL,
   `filetype` varchar(128) NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE `hd_attachments` (
 
 -- ============================================================================
 
-CREATE TABLE `hd_tickets_meta` (
+CREATE TABLE `tbl_hd_tickets_meta` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `meta` varchar(16) NOT NULL,
   `label` varchar(24) NOT NULL,

@@ -1,0 +1,9 @@
+{
+    "url":"ldap://10.231.0.179:389",
+    "url_backup":"ldap://10.231.5.14:389",
+    "secret":"!@#$capital!@#$",
+    "expiresIn":1200,
+    "refresh_time":420,
+    "issuer":"Umbrella Corporation"
+}
+   

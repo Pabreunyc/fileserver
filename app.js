@@ -5,6 +5,8 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 
+const jwt = require('./middlewares/jwt');
+
 const indexRouter = require('./routes/index'),
   usersRouter = require('./routes/users'),
   dbRouter = require('./routes/db.router'),
@@ -27,8 +29,10 @@ app.use( (req, res, next) => {
 })
 app.use(cors());
 
+app.use(jwt.checkToken);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/fileservice/v2', fileservicesRouter);
 app.use('/fileservice', fileservicesRouter);
 app.use('/db', dbRouter);
 
