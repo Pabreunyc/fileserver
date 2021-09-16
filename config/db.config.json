@@ -11,13 +11,14 @@
         "multipleStatements" : true
     },
     "parks": {
-        "host"   : "100.12.175.118",
+        "host":         "10.175.8.56",
+        "host_misc"   : "100.12.175.118",
         "host_dev"   : "100.12.175.118",
         "host_stg"   : "100.12.175.118",
         "database"   : "olmsted_SAHD_MDB",
         "dbuser" : "webapp",
         "dbpwd"  : "webapp",
-        "dbport" : 3306,        
+        "dbport" : 3307,        
         "conLimit" : 10,
         "multipleStatements" : true
     }

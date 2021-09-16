@@ -14,6 +14,8 @@ const dbCtr = require('./db.controller');
 const module_directories = require('../config/module_directories.json');
 const { runInNewContext } = require('vm');
 
+const platform = os.platform();
+
 //let UPLOADS_DIR   = path.join(process.cwd(), "_uploads");
 //UPLOADS_DIR = "file://192.168.1.173/public/";
 
@@ -55,7 +57,7 @@ const fileservicesCtr = {
     uploadMulti: async (req, res, next) => {
         const {files, fields} = req;
         const {activeDrivePath} = res.locals;
-        const platform = os.platform();
+        //const platform = os.platform();
 
         let today = new Date();
         let {username, module} = fields;
@@ -66,18 +68,29 @@ const fileservicesCtr = {
             return next( createError(400, `No file field included`) );
         }
 
-        let fff = [];
+        let moved = [], errs = [];
         for(let i=0; i<files.files.length; i++) {
-            fff.push( moveFiles(activeDrivePath, username, module, files.files[i]) );
-        }
-        console.log('after moveFiles:', fff);
+            try {
+                moved.push( moveFile(activeDrivePath, username, module, files.files[i]) );
+            } catch(e) {
+                errs.push( {file:files.files[i].name, error:e} );
+            }
+        }        
+        //console.log('after moveFiles:', moved, errs);
 
-        return res.json( {            
-            owner: username,
-            module: module,
-            files: fff,
-            timeStamp: today.getTime()
-        });
+        if(errs.length) {
+            return next( createError(
+                500, 
+                errs.map(e => e.message)
+            ) );
+        } else {
+            return res.json( {            
+                owner: username,
+                module: module,
+                files: moved,
+                timeStamp: today.getTime()
+            });
+        }
     },
     upload:async (req, res, next) => {
         const {files, fields} = req;
@@ -229,8 +242,7 @@ const fileservicesCtr = {
 }
 
 module.exports = fileservicesCtr;
-function moveFiles(activeDrivePath, username, module, file) {
-    const platform = os.platform();
+function moveFile(activeDrivePath, username, module, file) {    
     let timeStamp = Date.now();
 
     let newFilename = `${username}_${timeStamp}_${file.name}`;
@@ -253,33 +265,23 @@ function moveFiles(activeDrivePath, username, module, file) {
     if( (platform === 'linux') && (activeDrivePath.indexOf('file:') === 0) ) {
         return next( createError(500, "Invalid drive store. Contact Admin.") );
     }
-    console.log('upload', mime.lookup(file.path));
-
-    return {
-        destDir,
-        destFile,
-        timeStamp
-    };
-
-    if(false) {
-        return res.json( {
-            filename:newFilename,
-            activeDrivePath:activeDrivePath, 
-            moduleDirectory: moduleDirectory,
-            destDir:destDir, destFile:destFile,
-            os:os.platform(), 
-            timeStamp:Date().toLocaleString()
-        } );
-    }
+    //console.log('upload', file.path, 'type:', mime.lookup(file.path) );
 
     try {
-        console.log('1');
-        copyFileToDestination(files.files.path, destDir, destFile);
-        console.log('2');
+        copyFileToDestination(file.path, destDir, destFile);
+        return {
+            destFile: destFile,
+            filename: file.name,
+            newFilename: newFilename,
+            hash: file.hash,
+            owner: username,
+            size: file.size,
+            type: file.type,
+            timeStamp: timeStamp
+        };
     } catch(e) {
-        console.log('3', e);
-        return next( createError(500, e.toString()) );
-    }
+        throw new Error(e);
+    }    
 }
 
 function copyFileToDestination(origFile, destDir, destFile) {
