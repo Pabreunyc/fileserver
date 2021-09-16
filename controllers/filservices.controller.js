@@ -52,6 +52,26 @@ const fileservicesCtr = {
             directoryListing: directoryListing
         });
     },
+    uploadMulti: async (req, res, next) => {
+        const {files, fields} = req;
+        const {activeDrivePath} = res.locals;
+        const platform = os.platform();
+
+        let today = new Date();
+        let {username, module} = fields;
+        username = (username || '').trim().toLowerCase().replace(/\W/g, '_');// + '__' + today.subtring(0,10);
+        module = (module || '').trim().toLowerCase();
+
+        if(!files.hasOwnProperty('files') || (files.files.length === 0) ) {
+            return next( createError(400, `No file field included`) );
+        }
+
+        return res.json( {            
+            owner: username,
+            module: module,
+            timeStamp: today.getTime()
+        });
+    },
     upload:async (req, res, next) => {
         const {files, fields} = req;
         const {activeDrivePath} = res.locals;
@@ -105,32 +125,6 @@ const fileservicesCtr = {
                 timeStamp:Date().toLocaleString()
             } );
         }
-
-        // let's create module folder if new upload; mode ignored on Windows
-        /*
-        try {
-            !fs.existsSync(destDir) && fs.mkdirSync(destDir, {recursive:true});
-        } catch(e) {
-            console.log('mkdir.ERR', e);
-            console.log(destDir.href);
-            return next( createError(500, e.toString()) );
-        }
-
-        try {
-            fs.copyFileSync(files.files.path, destFile );
-        } catch(e) {
-            console.log(`fs.copyFileSync.ERR`, e);
-            return next( createError(500, e.toString()) );
-        }
-
-        try {
-            console.log('unlink', files.files.path);
-            fs.unlinkSync(files.files.path);
-        } catch(e) {
-            console.log('fs.unlinkSync.ERR', e);
-            return next( createError(500, e.toString()) );
-        }
-        */
 
         try {
             console.log('1');
@@ -223,11 +217,55 @@ const fileservicesCtr = {
             return next( createError(404) );
         } 
     },
-
+    
     // ========================================================================    
 }
 
 module.exports = fileservicesCtr;
+function moveFiles(activeDrivePath, module, files) {
+    let timeStamp = Date.now();
+    let newFilename = `${username}_${timeStamp}_${files.files.name}`;
+    let moduleDirectory = module_directories[module].directory ? module_directories[module].directory : module_directories[module];
+
+    let destDir = destFile = '__';
+    // o Win32, forcing FILE: protocol
+    if( (platform === 'win32') && (activeDrivePath.indexOf('file:') != 0) ) {
+        destDir = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC,  moduleDirectory) );
+        destFile = url.pathToFileURL(path.join(activeDrivePath, CBG_MASTERDOC, moduleDirectory, newFilename) );
+    }
+    if( (platform === 'win32') && (activeDrivePath.indexOf('file:') === 0) ) {            
+        destDir = new URL( activeDrivePath + CBG_MASTERDOC + '/' + moduleDirectory );
+        destFile = new URL( activeDrivePath + CBG_MASTERDOC + '/' + moduleDirectory + '/' + newFilename );
+    }
+    if( platform === 'linux' && (activeDrivePath.indexOf('file:') !== 0)) {
+        destDir = path.join(activeDrivePath, CBG_MASTERDOC, moduleDirectory);
+        destFile = path.join(destDir, newFilename);
+    }
+    if( (platform === 'linux') && (activeDrivePath.indexOf('file:') === 0) ) {
+        return next( createError(500, "Invalid drive store. Contact Admin.") );
+    }
+    console.log('upload', mime.lookup(files.files.name));
+
+    if(false) {
+        return res.json( {
+            filename:newFilename,
+            activeDrivePath:activeDrivePath, 
+            moduleDirectory: moduleDirectory,
+            destDir:destDir, destFile:destFile,
+            os:os.platform(), 
+            timeStamp:Date().toLocaleString()
+        } );
+    }
+
+    try {
+        console.log('1');
+        copyFileToDestination(files.files.path, destDir, destFile);
+        console.log('2');
+    } catch(e) {
+        console.log('3', e);
+        return next( createError(500, e.toString()) );
+    }
+}
 
 function copyFileToDestination(origFile, destDir, destFile) {
     try {

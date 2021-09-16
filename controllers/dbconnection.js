@@ -2,7 +2,7 @@ var dbconfig = require('../config/db.config.json');
 var mysql = require('mysql');
 var util = require('util');
 
-const DB = dbconfig.parks;
+const DB = dbconfig.vm
 
 var dbpool = mysql.createPool({
     host     : DB.host,

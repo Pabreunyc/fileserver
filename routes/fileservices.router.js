@@ -48,6 +48,7 @@ router.route('/')
     });
 
 router.post('/upload', formidableMW({hash:'md5'}),  fileservicesCtr.upload);
+router.post('/uploadMulti', formidableMW({hash:'md5', multiples:true}),  fileservicesCtr.uploadMulti);
 router.post('/download', formidableMW(), fileservicesCtr.download);
 
 router.get('/modules', mwFunc, fileservicesCtr.getModulesList);
