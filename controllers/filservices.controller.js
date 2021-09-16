@@ -66,9 +66,16 @@ const fileservicesCtr = {
             return next( createError(400, `No file field included`) );
         }
 
+        let fff = [];
+        for(let i=0; i<files.files.length; i++) {
+            fff.push( moveFiles(activeDrivePath, username, module, files.files[i]) );
+        }
+        console.log('after moveFiles:', fff);
+
         return res.json( {            
             owner: username,
             module: module,
+            files: fff,
             timeStamp: today.getTime()
         });
     },
@@ -222,9 +229,11 @@ const fileservicesCtr = {
 }
 
 module.exports = fileservicesCtr;
-function moveFiles(activeDrivePath, module, files) {
+function moveFiles(activeDrivePath, username, module, file) {
+    const platform = os.platform();
     let timeStamp = Date.now();
-    let newFilename = `${username}_${timeStamp}_${files.files.name}`;
+
+    let newFilename = `${username}_${timeStamp}_${file.name}`;
     let moduleDirectory = module_directories[module].directory ? module_directories[module].directory : module_directories[module];
 
     let destDir = destFile = '__';
@@ -244,7 +253,13 @@ function moveFiles(activeDrivePath, module, files) {
     if( (platform === 'linux') && (activeDrivePath.indexOf('file:') === 0) ) {
         return next( createError(500, "Invalid drive store. Contact Admin.") );
     }
-    console.log('upload', mime.lookup(files.files.name));
+    console.log('upload', mime.lookup(file.path));
+
+    return {
+        destDir,
+        destFile,
+        timeStamp
+    };
 
     if(false) {
         return res.json( {
