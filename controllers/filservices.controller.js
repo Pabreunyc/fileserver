@@ -236,12 +236,14 @@ const fileservicesCtr = {
         } else {
             return next( createError(404) );
         } 
-    },
-    
-    // ========================================================================    
+    }    
 }
 
 module.exports = fileservicesCtr;
+
+// ========================================================================
+//  "private" functions
+// ========================================================================  
 function moveFile(activeDrivePath, username, module, file) {    
     let timeStamp = Date.now();
 
